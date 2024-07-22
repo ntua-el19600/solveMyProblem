@@ -1,0 +1,8 @@
+# Use the official MongoDB image from the Docker Hub
+FROM mongo:latest
+
+# Expose port 2000 to the host machine
+EXPOSE 2000
+
+# Run MongoDB and bind it to port 2000
+CMD ["mongod", "--port", "2000"]
