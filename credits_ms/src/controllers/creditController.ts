@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Credit from '../models/credit'; // Your credit model
+import Credit from '../models/credit';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -30,8 +30,8 @@ export const purchaseCredits = async (req: Request, res: Response) => {
 
     // Find or create a Credit record for the user, updating the credits
     const creditRecord = await Credit.findOneAndUpdate(
-      { userId }, // Query to find the record
-      { $inc: { credits } }, // Increment the credits field
+      { userId },
+      { $inc: { credits } },
       {
         new: true, // Return the updated document
         upsert: true // Create the document if it does not exist

@@ -1,5 +1,5 @@
 # MICROSERVICE
 
-## (name)
+## Credits Microservice
 
-(description)
+Microservice to manipulate the user's credits
