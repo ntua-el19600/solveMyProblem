@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Credit from '../models/credit';
+import Credit from '../models/credit'; // Your credit model
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -16,26 +16,32 @@ export const purchaseCredits = async (req: Request, res: Response) => {
   try {
     // Create a PaymentIntent and confirm it
     const paymentIntent = await stripe.paymentIntents.create({
-        amount: credits * 100, // Assuming 1 credit = $1
-        currency: 'usd',
-        payment_method: paymentMethodId,
-        confirm: true,
-        return_url: "http://localhost:3000/credits"
+      amount: credits * 100, // Assuming 1 credit = $1
+      currency: 'usd',
+      payment_method: paymentMethodId,
+      confirm: true,
+      return_url: "http://localhost:3000/credits"
     });
 
     // Check if payment was successful
     if (paymentIntent.status !== 'succeeded') {
-        throw new Error('Payment failed');
+      throw new Error('Payment failed');
     }
 
-    // Create and save the credit record if payment is successful
-    const newCredit = new Credit({ userId, credits });
-    await newCredit.save();
-    res.status(201).send(newCredit);
-} catch (err) {
+    // Find or create a Credit record for the user, updating the credits
+    const creditRecord = await Credit.findOneAndUpdate(
+      { userId }, // Query to find the record
+      { $inc: { credits } }, // Increment the credits field
+      {
+        new: true, // Return the updated document
+        upsert: true // Create the document if it does not exist
+      }
+    );
+
+    res.status(201).send({ message: 'Credits purchased successfully', credits: creditRecord.credits });
+  } catch (err) {
     // Log the error for debugging purposes
     console.error('Error processing payment or saving credit:', err);
     res.status(500).send('Server error');
-}
-
+  }
 };
