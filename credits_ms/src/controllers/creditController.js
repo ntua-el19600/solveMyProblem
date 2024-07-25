@@ -1,35 +1,26 @@
-const User = require('../models/userModel');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Credit = require('../models/credit');
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-const buyCredits = async (req, res) => {
-  const { amount, paymentMethodId } = req.body;
-  const { userId } = req.auth;
+exports.purchaseCredits = async (req, res) => {
+    const { userId, credits, paymentMethodId } = req.body;
 
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ message: 'Invalid amount' });
-  }
-
-  try {
-    // Process the payment
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert to smallest currency unit
-      currency: 'usd',
-      payment_method: paymentMethodId,
-      confirm: true,
-    });
-
-    let user = await User.findOne({ clerkId: userId });
-    if (!user) {
-      user = new User({ clerkId: userId });
+    if (!userId || !credits || !paymentMethodId) {
+        return res.status(400).send('User ID, credits, and payment method are required');
     }
 
-    user.credits += amount;
-    await user.save();
+    try {
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: credits, // Assuming 1 credit = $1
+            currency: 'eur',
+            payment_method: paymentMethodId,
+            confirm: true,
+        });
 
-    return res.status(200).json({ message: 'Credits purchased successfully', credits: user.credits });
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error', error: error.message });
-  }
+        const newCredit = new Credit({ userId, credits });
+        await newCredit.save();
+        res.status(201).send(newCredit);
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
 };
-
-module.exports = { buyCredits };

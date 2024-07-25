@@ -1,9 +1,11 @@
 const express = require('express');
-const { buyCredits } = require('../controllers/creditController');
-const authMiddleware = require('../middlewares/authMiddleware');
-
 const router = express.Router();
+const creditController = require('../controllers/creditController');
+const { ClerkExpressMiddleware, requireSession } = require('@clerk/clerk-sdk-node');
 
-router.post('/buy', authMiddleware, buyCredits);
+router.use(ClerkExpressMiddleware());
+router.use(requireSession());
+
+router.post('/purchase', creditController.purchaseCredits);
 
 module.exports = router;
