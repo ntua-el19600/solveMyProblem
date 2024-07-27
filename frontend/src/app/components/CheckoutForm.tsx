@@ -41,17 +41,20 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
       return
     }
 
-    const response = await fetch('/api/credits/purchase', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: user.id,
-        credits,
-        paymentMethodId: paymentMethod.id
-      })
-    })
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_PAYMENT_ENDPOINT}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          credits,
+          paymentMethodId: paymentMethod.id
+        })
+      }
+    )
 
     if (!response.ok) {
       const errorMessage = await response.text()
