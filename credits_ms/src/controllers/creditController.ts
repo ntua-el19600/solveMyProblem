@@ -10,7 +10,7 @@ export const purchaseCredits = async (req: Request, res: Response) => {
   const { userId, credits, paymentMethodId } = req.body;
 
   if (!userId || !credits || !paymentMethodId) {
-    return res.status(400).send('User ID, credits, and payment method are required');
+    return res.status(400).json({ error: 'User ID, credits, and payment method are required' });
   }
 
   try {
@@ -38,10 +38,10 @@ export const purchaseCredits = async (req: Request, res: Response) => {
       }
     );
 
-    res.status(201).send({ message: 'Credits purchased successfully', credits: creditRecord.credits });
+    res.status(201).json({ message: 'Credits purchased successfully', credits: creditRecord.credits });
   } catch (err) {
     // Log the error for debugging purposes
     console.error('Error processing payment or saving credit:', err);
-    res.status(500).send('Server error');
+    res.status(500).json({ error: 'Server error' });
   }
 };
