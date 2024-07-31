@@ -1,15 +1,17 @@
-'use client'
-import {FC} from 'react'
-import {Logo} from './Logo'
-import {SignInButton, SignedIn, SignedOut, UserButton} from '@clerk/nextjs'
-import {Button, Chip} from '@mui/material'
-import {useRouter} from 'next/navigation'
+// src/app/components/NavBar.tsx
+'use client';
+import { FC } from 'react';
+import { Logo } from './Logo';
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { Button, Chip } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { useUserContext } from '../../context/UserContext';
 
 export const NavBar: FC = () => {
-  const router = useRouter()
-  const credits = 0
+  const router = useRouter();
+  const { credits } = useUserContext();
 
-  const handleClick = () => router.push('/credits')
+  const handleClick = () => router.push('/credits');
 
   return (
     <div className="h-12 w-full bg-blue-500 text-white px-4 justify-between flex items-center">
@@ -31,5 +33,5 @@ export const NavBar: FC = () => {
         </div>
       </SignedIn>
     </div>
-  )
-}
+  );
+};

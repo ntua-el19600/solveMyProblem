@@ -45,3 +45,24 @@ export const purchaseCredits = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+export const getCredits = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    const creditRecord = await Credit.findOne({ userId });
+
+    if (!creditRecord) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({ credits: creditRecord.credits });
+  } catch (err: any) {
+    console.error('Error fetching credits:', err);
+    res.status(500).json({ error: err.message || 'Server error' });
+  }
+};
