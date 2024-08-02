@@ -1,10 +1,6 @@
 import { Request, Response } from 'express';
 import Credit from '../models/credit';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2024-06-20',
-});
+import { publishToQueue } from '../utils/rabbitmq';
 
 export const purchaseCredits = async (req: Request, res: Response) => {
   const { userId, credits, paymentMethodId } = req.body;
@@ -14,34 +10,13 @@ export const purchaseCredits = async (req: Request, res: Response) => {
   }
 
   try {
-    // Create a PaymentIntent and confirm it
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: credits * 100, // Assuming 1 credit = $1
-      currency: 'usd',
-      payment_method: paymentMethodId,
-      confirm: true,
-      return_url: "http://localhost:3000/credits"
-    });
+    // Publish the purchase request to RabbitMQ
+    const message = JSON.stringify({ userId, credits, paymentMethodId });
+    await publishToQueue('credit_purchases', message);
 
-    // Check if payment was successful
-    if (paymentIntent.status !== 'succeeded') {
-      throw new Error('Payment failed');
-    }
-
-    // Find or create a Credit record for the user, updating the credits
-    const creditRecord = await Credit.findOneAndUpdate(
-      { userId },
-      { $inc: { credits } },
-      {
-        new: true, // Return the updated document
-        upsert: true // Create the document if it does not exist
-      }
-    );
-
-    res.status(201).json({ message: 'Credits purchased successfully', credits: creditRecord.credits });
+    res.status(201).json({ message: 'Purchase request received' });
   } catch (err) {
-    // Log the error for debugging purposes
-    console.error('Error processing payment or saving credit:', err);
+    console.error('Error publishing message to RabbitMQ:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };

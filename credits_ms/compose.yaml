@@ -13,8 +13,25 @@ services:
       context: .
     environment:
       NODE_ENV: production
+      RABBITMQ_URL: amqp://rabbitmq
     env_file:
       - path: ./.env.local
         required: true
     ports:
       - 3001:3001
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672" # for management UI
+  worker:
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+      RABBITMQ_URL: amqp://rabbitmq
+    depends_on:
+      - rabbitmq
+    env_file:
+      - path: ./.env.local
+        required: true
