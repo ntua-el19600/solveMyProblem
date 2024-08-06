@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Credit from '../models/credit';
-import { publishToQueue } from '../utils/rabbitmq';
+import { publishToExchange } from '../utils/rabbitmq';
 
 export const purchaseCredits = async (req: Request, res: Response) => {
   const { userId, credits, paymentMethodId } = req.body;
@@ -10,9 +10,9 @@ export const purchaseCredits = async (req: Request, res: Response) => {
   }
 
   try {
-    // Publish the purchase request to RabbitMQ
+    // Publish the purchase request to RabbitMQ exchange
     const message = JSON.stringify({ userId, credits, paymentMethodId });
-    await publishToQueue('credit_purchases', message);
+    await publishToExchange('credit_exchange', 'credit_purchases', message);
 
     res.status(201).json({ message: 'Purchase request received' });
   } catch (err) {

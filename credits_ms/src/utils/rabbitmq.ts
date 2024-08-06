@@ -10,9 +10,16 @@ const connectRabbitMQ = async (retries = 5) => {
     try {
       const connection = await amqp.connect(process.env.RABBITMQ_URL as string);
       channel = await connection.createChannel();
-      await channel.assertQueue('credit_purchases', { durable: true });
-      console.log('Connected to RabbitMQ');
-      return;
+      const exchangeName = 'credit_exchange';
+      const queueName = 'credit_purchases';
+
+      // Declare the exchange
+      await channel.assertExchange(exchangeName, 'direct', { durable: true });
+      
+      // Declare the queue and bind it to the exchange
+      await channel.assertQueue(queueName, { durable: true });
+      await channel.bindQueue(queueName, exchangeName, queueName);
+      return channel;
     } catch (error) {
       console.error(`Failed to connect to RabbitMQ, retries left: ${retries - 1}`, error);
       retries -= 1;
@@ -23,18 +30,18 @@ const connectRabbitMQ = async (retries = 5) => {
   process.exit(1); // Exit the process if all retries fail
 };
 
-const publishToQueue = async (queue: string, message: string) => {
+const publishToExchange = async (exchange: string, routingKey: string, message: string) => {
   if (!channel) {
     console.error('Cannot send message, channel is not initialized');
     return;
   }
 
   try {
-    await channel.sendToQueue(queue, Buffer.from(message), { persistent: true });
-    console.log(`Message sent to queue ${queue}`);
+    await channel.publish(exchange, routingKey, Buffer.from(message), { persistent: true });
+    console.log(`Message sent to exchange ${exchange} with routing key ${routingKey}`);
   } catch (error) {
-    console.error('Failed to send message to queue', error);
+    console.error('Failed to send message to exchange', error);
   }
 };
 
-export { connectRabbitMQ, publishToQueue };
+export { connectRabbitMQ, publishToExchange };

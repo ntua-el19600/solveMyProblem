@@ -2,6 +2,7 @@ import amqp from 'amqplib';
 import Stripe from 'stripe';
 import Credit from '../models/credit';
 import dotenv from 'dotenv';
+import { connectRabbitMQ } from '../utils/rabbitmq';
 
 dotenv.config({ path: '.env.local' });
 
@@ -47,17 +48,13 @@ const processPurchase = async (msg: amqp.Message) => {
 
 const startWorker = async () => {
   try {
-    const connection = await amqp.connect(process.env.RABBITMQ_URL as string);
+    const channel = await connectRabbitMQ();
     console.log('Connected to RabbitMQ');
-    const channel = await connection.createChannel();
-    
-    await channel.assertQueue('credit_purchases', { durable: true });
-    console.log('Queue asserted');
 
+    // Consume messages from the queue
     channel.consume('credit_purchases', async (msg) => {
       if (msg !== null) {
         try {
-          console.log('Message received:', msg.content.toString());
           await processPurchase(msg);
           channel.ack(msg); // Acknowledge the message
           console.log('Message acknowledged');
