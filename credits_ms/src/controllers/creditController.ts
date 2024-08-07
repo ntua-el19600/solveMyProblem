@@ -1,6 +1,14 @@
 import { Request, Response } from 'express';
+import Stripe from 'stripe';
 import Credit from '../models/credit';
-import { publishToExchange } from '../utils/rabbitmq';
+import dotenv from 'dotenv';
+
+import { publishCreditAdded } from '../utils/rabbitmq';
+
+dotenv.config({ path: '.env.local' });
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2024-06-20' });
+
 
 export const purchaseCredits = async (req: Request, res: Response) => {
   const { userId, credits, paymentMethodId } = req.body;
@@ -9,15 +17,40 @@ export const purchaseCredits = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'User ID, credits, and payment method are required' });
   }
 
-  try {
-    // Publish the purchase request to RabbitMQ exchange
-    const message = JSON.stringify({ userId, credits, paymentMethodId });
-    await publishToExchange('credit_exchange', 'credit_purchases', message);
+  console.log(`Processing purchase for user ${userId}, credits: ${credits}, paymentMethodId: ${paymentMethodId}`);
+  try{
+  const paymentAmount = credits * 100; // Assuming 1 credit = $1
+  const paymentIntent = await stripe.paymentIntents.create({
+          amount: paymentAmount,
+          currency: 'usd',
+          payment_method: paymentMethodId,
+          confirm: true,
+          return_url: 'http://localhost:3000/credits'
+  });
 
-    res.status(201).json({ message: 'Purchase request received' });
+  if (paymentIntent.status === 'requires_action') {
+    return res.send({
+        requiresAction: true,
+        clientSecret: paymentIntent.client_secret,
+    });
+} else if (paymentIntent.status === 'succeeded') {
+    await publishCreditAdded(userId, credits);
+    res.json({ status: 'success', message: 'Credits addition initiated' });
+} else {
+    res.status(500).json({ error: 'Unexpected payment status' });
+}
+
+    
+      const creditRecord = await Credit.findOneAndUpdate(
+      { userId },
+      { $inc: { credits } },
+      { new: true, upsert: true }
+    );
+
+    console.log(`Credits updated for user ${userId}: ${creditRecord.credits}`);
   } catch (err) {
-    console.error('Error publishing message to RabbitMQ:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error processing purchase:', err);
+    throw err; // Rethrow to handle acknowledgment
   }
 };
 

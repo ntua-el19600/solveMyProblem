@@ -16,7 +16,7 @@ services:
       - app-network
 
   rabbitmq:
-    image: rabbitmq:management
+    image: rabbitmq:3-management
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -28,19 +28,6 @@ services:
     networks:
       - app-network
 
-  worker:
-    build:
-      context: .
-    environment:
-      NODE_ENV: production
-      RABBITMQ_URL: amqp://rabbitmq:5672
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    env_file:
-      - ./.env.local
-    networks:
-      - app-network
 
 networks:
   app-network:

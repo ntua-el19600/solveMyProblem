@@ -5,7 +5,7 @@ import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import creditRoutes from './routes/creditRoutes';
-import { connectRabbitMQ } from './utils/rabbitmq';
+import { setupRabbitMQ } from './utils/rabbitmq';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,7 +23,7 @@ const startServer = async () => {
     await mongoose.connect(process.env.MONGODB_URI as string);
     console.log('Connected to MongoDB');
 
-    await connectRabbitMQ(); // Connect to RabbitMQ before starting the server
+    await setupRabbitMQ(); // Connect to RabbitMQ before starting the server
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

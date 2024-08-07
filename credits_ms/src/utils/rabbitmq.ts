@@ -5,43 +5,52 @@ dotenv.config({ path: '.env.local' });
 
 let channel: amqp.Channel;
 
-const connectRabbitMQ = async (retries = 5) => {
-  while (retries > 0) {
-    try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URL as string);
-      channel = await connection.createChannel();
-      const exchangeName = 'credit_exchange';
-      const queueName = 'credit_purchases';
-
-      // Declare the exchange
-      await channel.assertExchange(exchangeName, 'direct', { durable: true });
-      
-      // Declare the queue and bind it to the exchange
-      await channel.assertQueue(queueName, { durable: true });
-      await channel.bindQueue(queueName, exchangeName, queueName);
-      return channel;
-    } catch (error) {
-      console.error(`Failed to connect to RabbitMQ, retries left: ${retries - 1}`, error);
-      retries -= 1;
-      await new Promise(res => setTimeout(res, 5000)); // wait for 5 seconds before retrying
-    }
-  }
-  console.error('All retries to connect to RabbitMQ failed');
-  process.exit(1); // Exit the process if all retries fail
-};
-
-const publishToExchange = async (exchange: string, routingKey: string, message: string) => {
-  if (!channel) {
-    console.error('Cannot send message, channel is not initialized');
-    return;
-  }
-
+export const setupRabbitMQ = async () => {
   try {
-    await channel.publish(exchange, routingKey, Buffer.from(message), { persistent: true });
-    console.log(`Message sent to exchange ${exchange} with routing key ${routingKey}`);
+    const rabbitMqUrl = process.env.RABBITMQ_URL;
+    if (!rabbitMqUrl) {
+      throw new Error("RABBITMQ_URL environment variable is not set");
+    }
+
+    const connection = await amqp.connect(rabbitMqUrl);
+    channel = await connection.createChannel();
+
+    const exchange = process.env.CREDITS_EXCHANGE_NAME;
+    if (!exchange) {
+      throw new Error("CREDITS_EXCHANGE_NAME environment variable is not set");
+    }
+    await channel.assertExchange(exchange, 'direct', { durable: true });
+
+    console.log('RabbitMQ correctly connected');
   } catch (error) {
-    console.error('Failed to send message to exchange', error);
+    console.error("Failed to connect to RabbitMQ:", error);
+    setTimeout(setupRabbitMQ, 5000); // Retry connection
   }
 };
 
-export { connectRabbitMQ, publishToExchange };
+export const publishCreditAdded = async (userId: string, amount: number) => {
+  const exchange = process.env.CREDITS_EXCHANGE_NAME;
+  const routingKey = process.env.CREDITS_ADDED_ROUTING_KEY;
+  const usersRoutingKey = process.env.USER_CREDITS_ROUTING_KEY;
+
+  if (!exchange) {
+    throw new Error("CREDITS_EXCHANGE_NAME environment variable is not set");
+  }
+  if (!routingKey) {
+    throw new Error("CREDITS_ADDED_ROUTING_KEY environment variable is not set");
+  }
+  if (!usersRoutingKey) {
+    throw new Error("USER_CREDITS_ROUTING_KEY environment variable is not set");
+  }
+
+  const msg = JSON.stringify({
+    action: 'update',
+    data: { userID: userId, creditsChange: amount }
+  });
+
+  channel.publish(exchange, routingKey, Buffer.from(msg), { persistent: true });
+  channel.publish(exchange, usersRoutingKey, Buffer.from(msg), { persistent: true });
+  console.log(`Credit addition message published for user ${userId}`);
+};
+
+
