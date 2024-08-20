@@ -26,7 +26,7 @@ export const NavBar: FC = () => {
       <SignedIn>
         <div className="flex align-middle gap-4">
           <Chip
-            className={'text-white'}
+            className={'!text-white !border-white'}
             label={'Credits: ' + credits}
             onClick={handleClick}
             variant="outlined"
