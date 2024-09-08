@@ -13,10 +13,10 @@ export default function Home() {
 
   return (
     <>
-      <h1>Welcome to solveMyProblem!</h1>
       <div className="absolute top-4 right-4 text-right">
         <p>{`Current Date/Time: ${dateTime}` || 'Loading...'}</p>
       </div>
+      {/* Solver model */}
     </>
   )
 }
