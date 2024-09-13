@@ -3,7 +3,7 @@ import {FC, useState} from 'react'
 import {useStripe, useElements, CardElement} from '@stripe/react-stripe-js'
 import {useUser} from '@clerk/nextjs'
 import {StripeCardElement} from '@stripe/stripe-js'
-import {Button, Input} from '@mui/material'
+import {Button, Input, Snackbar, Alert} from '@mui/material'
 
 export const CheckoutForm: FC<{className?: string}> = ({className}) => {
   const stripe = useStripe()
@@ -11,6 +11,7 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
   const {user} = useUser()
   const [credits, setCredits] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null) // New state for success notification
 
   const handlePurchase = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -66,6 +67,7 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
       const data = await response.json()
       console.log(data)
       setError(null)
+      setSuccessMessage('Purchase successful!') // Set success message
     } catch (error) {
       setError('Failed to complete purchase')
       console.error('Error during purchase:', error)
@@ -73,20 +75,33 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
   }
 
   return (
-    <form className={className} onSubmit={handlePurchase}>
-      <h1 className="pb-2 text-xl">Purchase Credits</h1>
-      <Input
-        className="mb-4"
-        type="number"
-        placeholder="Number of credits"
-        value={credits}
-        onChange={(e) => setCredits(Number(e.target.value))}
-      />
-      <CardElement className="w-full pb-4" />
-      <Button type="submit" disabled={!stripe} variant="outlined">
-        Purchase
-      </Button>
-      {error && <div>{error}</div>}
-    </form>
+    <>
+      <form className={className} onSubmit={handlePurchase}>
+        <h1 className="pb-2 text-xl">Purchase Credits</h1>
+        <Input
+          className="mb-4"
+          type="number"
+          placeholder="Number of credits"
+          value={credits}
+          onChange={(e) => setCredits(Number(e.target.value))}
+        />
+        <CardElement className="w-full pb-4" />
+        <Button type="submit" disabled={!stripe} variant="outlined">
+          Purchase
+        </Button>
+        {error && <div>{error}</div>}
+      </form>
+
+      {/* Notification for successful purchase */}
+      <Snackbar
+        open={Boolean(successMessage)}
+        autoHideDuration={6000} // The notification will disappear after 6 seconds
+        onClose={() => setSuccessMessage(null)} // Clear the message after the Snackbar closes
+      >
+        <Alert onClose={() => setSuccessMessage(null)} severity="success">
+          {successMessage}
+        </Alert>
+      </Snackbar>
+    </>
   )
 }
