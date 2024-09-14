@@ -6,7 +6,6 @@ import {SignInButton, SignedIn, SignedOut, UserButton} from '@clerk/nextjs'
 import {Button, Chip} from '@mui/material'
 import {useRouter} from 'next/navigation'
 import {useUserContext} from '../../context/UserContext'
-import {Router} from 'next/router'
 
 export const NavBar: FC = () => {
   const router = useRouter()

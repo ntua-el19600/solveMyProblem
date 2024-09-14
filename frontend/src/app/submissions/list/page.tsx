@@ -9,10 +9,14 @@ import {
   TableHead,
   TableRow
 } from '@mui/material'
-import React, {useState, useEffect} from 'react'
+import {useRouter} from 'next/navigation'
+import {useState, useEffect} from 'react'
 
 export default function Home() {
+  const router = useRouter()
   const [dateTime, setDateTime] = useState('')
+
+  const handleClick = (route: string) => router.push(route)
 
   useEffect(() => {
     const updateTime = () => setDateTime(new Date().toLocaleString())
@@ -64,7 +68,7 @@ export default function Home() {
       </TableContainer>
       <Button
         className=" outline outline-1 outline-blue-500 hover:outline-2 text-blue-500 mt-6"
-        href="/submissions/new"
+        onClick={() => handleClick('/submissions/new')}
       >
         Create new
       </Button>
