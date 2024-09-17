@@ -24,6 +24,20 @@ export const setupRabbitMQListener = async () => {
 
     await channel.bindQueue(queue, exchange, routingKey);
 
+    const newExchange = "solution_exchange";
+    const newQueue = "solution_queue";
+    const newRoutingKey = "solution_routing_key";
+
+    await channel.assertExchange(newExchange, "direct", {
+      durable: true,
+    });
+
+    await channel.assertQueue(newQueue, {
+      durable: true,
+    });
+
+    await channel.bindQueue(newQueue, newExchange, newRoutingKey);
+
     console.log("RabbitMQ listener setup completed successfully.");
 
     await channel.consume(
@@ -34,7 +48,7 @@ export const setupRabbitMQListener = async () => {
           console.log("Message received:", messageContent);
 
           try {
-            const message = JSON.parse(messageContent);
+            var message = JSON.parse(messageContent);
 
             const problem = JSON.stringify(message.problem_data);
             const problem_data = JSON.parse(problem);
@@ -45,6 +59,14 @@ export const setupRabbitMQListener = async () => {
               const result = await solveLinearProblem(problem_data);
               console.log("Solution:", result.solution);
               console.log("Elapsed Time:", result.elapsedTime, "ms");
+              const mynhma = {
+                solution: result.solution,
+                elapsedTime: result.elapsedTime,
+                id: message.id,
+              };
+              const myn = JSON.stringify(mynhma);
+
+              await publishToQueue(myn);
               channel.ack(msg);
             } else if (message.category === "vrp") {
               const problem_data_vrp = JSON.stringify(problem_data.locations);
@@ -55,13 +77,26 @@ export const setupRabbitMQListener = async () => {
               const result = await solveVrpProblem(final, arg2, arg3, arg4);
               console.log("Solution:", result.solution);
               console.log("Elapsed Time:", result.elapsedTime, "ms");
+              const mynhma = {
+                solution: result.solution,
+                elapsedTime: result.elapsedTime,
+                id: message.id,
+              };
+              const myn = JSON.stringify(mynhma);
+              await publishToQueue(myn);
               channel.ack(msg);
             } else {
               throw new Error("Unknown category");
             }
           } catch (error) {
             console.error("Error processing message:");
-            // Optionally, you can nack the message to requeue it or move it to a dead-letter queue
+            const mynhma = {
+              solution: "none",
+              elapsedTime: 0,
+              id: message.id,
+            };
+            const myn = JSON.stringify(mynhma);
+            await publishToQueue(myn);
             channel.ack(msg);
           }
         }
@@ -72,7 +107,17 @@ export const setupRabbitMQListener = async () => {
     console.error("Error setting up RabbitMQ listener:", error);
   }
 };
+export const publishToQueue = async (message: string) => {
+  try {
+    const exchange = "solution_exchange";
+    const routingKey = "solution_routing_key";
+    await channel.publish(exchange, routingKey, Buffer.from(message));
 
+    console.log("Message published:", message);
+  } catch (error) {
+    console.error("Error publishing message:", error);
+  }
+};
 export const closeConnection = async () => {
   try {
     if (channel) {

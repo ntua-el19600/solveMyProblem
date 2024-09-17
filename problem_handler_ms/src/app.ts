@@ -6,6 +6,7 @@ import cookieSession from "cookie-session";
 import { errorHandler } from "./middlewares/error-handler";
 import { NotFoundError } from "./errors/not-found-error";
 import { addProblemRouter } from "./routes/addproblem";
+import { userproblemsRouter } from "./routes/userproblems";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(
   })
 );
 app.use(addProblemRouter);
+app.use(userproblemsRouter);
 
 app.all("*", async (req, res) => {
   throw new NotFoundError();

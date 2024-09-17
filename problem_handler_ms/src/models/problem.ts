@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 // Enums for problem status and category
-enum probStatus {
+export enum probStatus {
   Submitted = "submitted",
   Cancelled = "cancelled",
   Complete = "complete",
