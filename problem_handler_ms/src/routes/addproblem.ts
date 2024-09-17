@@ -47,6 +47,7 @@ router.post(
       const message = {
         category: problemAttrs.category,
         problem_data: problemAttrs.problem_data,
+        id: newProblem.id,
       };
       const myn = JSON.stringify(message);
 

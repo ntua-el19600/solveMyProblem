@@ -9,8 +9,11 @@ interface LinearProblemSolution {
   elapsedTime: number;
 }
 
-export const solveLinearProblem = async (
-  input: JSON
+export const solveVrpProblem = async (
+  input: JSON,
+  num_vehicles: string,
+  depot: string,
+  max_distance: string
 ): Promise<LinearProblemSolution> => {
   return new Promise((resolve, reject) => {
     try {
@@ -21,9 +24,16 @@ export const solveLinearProblem = async (
         __dirname,
         "..",
         "py",
-        "linearSolver.py"
+        "vrpSolver.py"
       );
-      const pythonArgs: string[] = [pythonFilePath, jsonFilePath];
+
+      const pythonArgs: string[] = [
+        pythonFilePath,
+        jsonFilePath,
+        num_vehicles,
+        depot,
+        max_distance,
+      ];
       let outputData = "";
 
       const startTime = Date.now();

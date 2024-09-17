@@ -23,13 +23,13 @@ def LinearProgrammingFromJson(json_file):
     for var in variables:
         var_dict[var] = solver.NumVar(0, infinity, var)
 
-    print("Number of variables =", solver.NumVariables())
+    # print("Number of variables =", solver.NumVariables())
 
     
     for constraint in constraints:
         solver.Add(eval(constraint, {}, var_dict))
 
-    print("Number of constraints =", solver.NumConstraints())
+    # print("Number of constraints =", solver.NumConstraints())
 
    
     if objective.startswith("Maximize"):
@@ -38,11 +38,11 @@ def LinearProgrammingFromJson(json_file):
         solver.Minimize(eval(objective[len("Minimize "):], {}, var_dict))
 
     
-    print(f"Solving with {solver.SolverVersion()}")
+    # print(f"Solving with {solver.SolverVersion()}")
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
-        print("Solution:")
+        # print("Solution:")
         print(f"Objective value = {solver.Objective().Value():0.1f}")
         for var in var_dict:
             print(f"{var} = {var_dict[var].solution_value():0.1f}")
