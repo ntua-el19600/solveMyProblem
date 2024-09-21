@@ -1,8 +1,6 @@
-import { currentUser } from "../middlewares/current-user";
 import { Problem } from "../models/problem";
 import express, { Request, Response } from "express";
 import { body } from "express-validator";
-import { requireAuth } from "../middlewares/require-auth";
 import { probCategory } from "../models/problem";
 import { validateRequest } from "../middlewares/validate-request";
 import mongoose from "mongoose";
@@ -12,8 +10,6 @@ const router = express.Router();
 
 router.post(
   "/api/probhandler/addproblem",
-  currentUser,
-  requireAuth,
   [
     body("category")
       .isString()
@@ -28,14 +24,11 @@ router.post(
   validateRequest,
 
   async (req: Request, res: Response) => {
-    const { category, json } = req.body;
+    const { userId, category, json } = req.body;
     const kat: probCategory = category as probCategory;
-    const user_id: mongoose.Types.ObjectId = new mongoose.Types.ObjectId(
-      req.currentUser!.id
-    );
 
     const problemAttrs = {
-      user_id: user_id,
+      user_id: userId,
       problem_data: json,
       category: kat,
     };

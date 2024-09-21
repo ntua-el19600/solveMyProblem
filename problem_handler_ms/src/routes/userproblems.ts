@@ -1,14 +1,11 @@
-import { currentUser } from "../middlewares/current-user";
 import { Problem } from "../models/problem";
 import express from "express";
-import mongoose from "mongoose";
+
 
 const router = express.Router();
 
-router.get("/api/probhandler/userProblems", currentUser, async (req, res) => {
-  const userId: mongoose.Types.ObjectId = new mongoose.Types.ObjectId(
-    req.currentUser!.id
-  );
+router.get("/api/probhandler/userProblems", async (req, res) => {
+  const { userId } = req.body;
   try {
     const problems = await Problem.find({ user_id: userId }).exec();
     res.send(problems).status(201);
