@@ -74,8 +74,8 @@ export default function Home() {
       <div className="absolute top-4 right-4 text-right">
         <p>{`Current Date/Time: ${dateTime}` || 'Loading...'}</p>
       </div>
-      <div className="w-full grid place-items-center mt-14">
-        <div className="w-2/3 h-[calc(100%-6rem)]">
+      <div className="!w-full !grid !place-items-center !mt-14">
+        <div className="!w-2/3 !h-[calc(100%-6rem)]">
           <FormControl required fullWidth>
             <InputLabel id="select-solver-model-label">Model</InputLabel>
             <Select
@@ -88,19 +88,19 @@ export default function Home() {
               }
               MenuProps={{
                 classes: {
-                  paper: 'shadow-md shadow-gray-500 rounded-md p-1.5',
-                  list: 'p-0'
+                  paper: '!shadow-md !shadow-gray-500 !rounded-md !p-1.5',
+                  list: '!p-0'
                 }
               }}
             >
               <MenuItem
-                className="hover:!bg-gray-300 focus:!bg-gray-400 rounded-md focus:outline-none"
+                className="hover:!bg-gray-300 focus:!bg-gray-400 !rounded-md focus:!outline-none"
                 value="linear"
               >
                 Linear
               </MenuItem>
               <MenuItem
-                className="hover:!bg-gray-300 focus:!bg-gray-400 rounded-md focus:outline-none"
+                className="hover:!bg-gray-300 focus:!bg-gray-400 !rounded-md focus:!outline-none"
                 value="vrp"
               >
                 Vehicle Routing Problem (VRP)
@@ -108,7 +108,7 @@ export default function Home() {
             </Select>
           </FormControl>
           <TextField
-            className="mt-4"
+            className="!mt-4"
             id="outlined-multiline-json-input"
             label="Json input"
             error={!!helperText}
@@ -121,17 +121,17 @@ export default function Home() {
             value={jsonInput}
           />
           {model ? (
-            <div className="text-lg mt-4 underline">
+            <div className="!text-lg !mt-4 !underline">
               Submitting costs{' '}
               {modelToCostMap[model as keyof typeof modelToCostMap]} credits!
             </div>
           ) : (
-            <div className="text-lg mt-4 italic">
+            <div className="!text-lg !mt-4 !italic">
               Please select a solver model
             </div>
           )}
           <Button
-            className="outline outline-1 outline-blue-500 hover:outline-2 text-blue-500 mt-2 disabled:outline-current"
+            className="!outline !outline-1 !outline-blue-500 hover:!outline-2 !text-blue-500 !mt-2 disabled:!outline-current"
             disabled={!model || !!helperText}
             onClick={handleSubmit}
           >

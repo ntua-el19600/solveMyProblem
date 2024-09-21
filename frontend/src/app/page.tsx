@@ -17,9 +17,11 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="grid justify-items-center p-10">
-      <h1 className="text-xl">Welcome to solveMyProblem!</h1>
-      <h2 className="text-lg">Check out the types of problems you can solve</h2>
+    <div className="!grid !justify-items-center !p-10">
+      <h1 className="!text-xl">Welcome to solveMyProblem!</h1>
+      <h2 className="!text-lg">
+        Check out the types of problems you can solve
+      </h2>
       <Box
         display="flex"
         justifyContent="space-between"
@@ -76,7 +78,7 @@ export default function Home() {
         </Box>
       </Box>
       <Button
-        className="outline outline-1 outline-blue-500 hover:outline-2 text-blue-500 mt-4 disabled:outline-current !capitalize"
+        className="!outline !outline-1 !outline-blue-500 hover:!outline-2 !text-blue-500 !mt-4 disabled:!outline-current !capitalize"
         onClick={() => handleClick('/submissions/new')}
       >
         Submit your problem now!

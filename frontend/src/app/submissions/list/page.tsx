@@ -35,18 +35,18 @@ export default function Home() {
       </div>
       <TableContainer
         component={Paper}
-        className="rounded-50 border border-blue-500 mt-14"
+        className="!rounded-50 !border !border-blue-500 !mt-14"
       >
         <Table sx={{minWidth: 650}} aria-label="submissions table">
           <TableHead>
             <TableRow>
-              <TableCell className="font-bold">Name</TableCell>
-              <TableCell className="font-bold">Created on</TableCell>
-              <TableCell className="font-bold">Status</TableCell>
-              <TableCell className="font-bold">Edit</TableCell>
-              <TableCell className="font-bold">Run</TableCell>
-              <TableCell className="font-bold">View results</TableCell>
-              <TableCell className="font-bold">Delete</TableCell>
+              <TableCell className="!font-bold">Name</TableCell>
+              <TableCell className="!font-bold">Created on</TableCell>
+              <TableCell className="!font-bold">Status</TableCell>
+              <TableCell className="!font-bold">Edit</TableCell>
+              <TableCell className="!font-bold">Run</TableCell>
+              <TableCell className="!font-bold">View results</TableCell>
+              <TableCell className="!font-bold">Delete</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -67,7 +67,7 @@ export default function Home() {
         </Table>
       </TableContainer>
       <Button
-        className=" outline outline-1 outline-blue-500 hover:outline-2 text-blue-500 mt-6"
+        className="!outline !outline-1 !outline-blue-500 hover:!outline-2 !text-blue-500 !mt-6"
         onClick={() => handleClick('/submissions/new')}
       >
         Create new
