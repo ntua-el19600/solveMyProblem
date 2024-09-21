@@ -17,11 +17,14 @@ export const NavBar: FC = () => {
     <div className="h-12 w-full bg-blue-500 text-white px-4 flex items-center gap-12">
       <Logo />
       <SignedOut>
-        <SignInButton>
-          <Button className="!text-white hover:outline hover:outline-1 hover:outline-white !capitalize">
-            Sign in
-          </Button>
-        </SignInButton>
+        <div className="w-full flex justify-between items-center">
+          <div /> {/* Placeholder to keep the logo on the left */}
+          <SignInButton>
+            <Button className="!text-white hover:outline hover:outline-1 hover:outline-white !capitalize">
+              Sign in
+            </Button>
+          </SignInButton>
+        </div>
       </SignedOut>
       <SignedIn>
         <div className="w-full justify-between flex items-center gap-4">

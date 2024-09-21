@@ -67,7 +67,7 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
       const data = await response.json()
       console.log(data)
       setError(null)
-      setSuccessMessage('Purchase successful!') // Set success message
+      setSuccessMessage('Purchase successful!')
     } catch (error) {
       setError('Failed to complete purchase')
       console.error('Error during purchase:', error)
@@ -92,11 +92,10 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
         {error && <div>{error}</div>}
       </form>
 
-      {/* Notification for successful purchase */}
       <Snackbar
         open={Boolean(successMessage)}
-        autoHideDuration={6000} // The notification will disappear after 6 seconds
-        onClose={() => setSuccessMessage(null)} // Clear the message after the Snackbar closes
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage(null)}
       >
         <Alert onClose={() => setSuccessMessage(null)} severity="success">
           {successMessage}
