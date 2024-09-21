@@ -6,7 +6,7 @@ import { app } from "./app";
 
 const start = async () => {
   try {
-    await mongoose.connect("mongodb://localhost:2001");
+    await mongoose.connect(process.env.MONGODB_URI as string);
 
     console.log("Connected to MongoDb");
   } catch (err) {
@@ -19,8 +19,8 @@ const start = async () => {
     console.log("cant connect to rabbitmq");
   }
 
-  app.listen(3004, () => {
-    console.log("Listening on port 3004!!!!!!!!");
+  app.listen(3002, () => {
+    console.log("Listening on port 3002!!!!!!!!");
   });
 };
 
