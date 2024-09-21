@@ -1,6 +1,8 @@
 import { app } from "./app";
 import { setupRabbitMQListener,closeConnection } from "./rabbitmq/rabbitmq";
 
+const PORT = process.env.PORT || 3003;
+
 const start = async () => {
 
   try {
@@ -9,11 +11,10 @@ const start = async () => {
   } catch (err) {
     console.log("cant connect to rabbitmq");
   }
-  app.listen(3003, () => {
-    console.log("Listening on port 3003!!!!!!!!");
+  app.listen(PORT, () => {
+    console.log(`Listening on port ${PORT}`);
   });
 
-  
 };
 
 process.on("SIGTERM", async () => {

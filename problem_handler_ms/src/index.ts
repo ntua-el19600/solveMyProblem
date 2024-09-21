@@ -4,6 +4,8 @@ import { closeConnection, setupRabbitMQ } from "./rabbitmq/rabbitmq";
 
 import { app } from "./app";
 
+const PORT = process.env.PORT || 3002;
+
 const start = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI as string);
@@ -19,8 +21,8 @@ const start = async () => {
     console.log("cant connect to rabbitmq");
   }
 
-  app.listen(3002, () => {
-    console.log("Listening on port 3002!!!!!!!!");
+  app.listen(PORT, () => {
+    console.log(`Listening on port ${PORT}`);
   });
 };
 

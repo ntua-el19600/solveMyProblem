@@ -1,20 +1,16 @@
-
-
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      NODE_ENV: production
+    env_file:
+      - path: ./frontend/.env.local
+        required: true
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - app-network
+      - 3000:3000
 
-  credits_ms:
+  credits:
     build:
       context: ./credits_ms
     environment:
@@ -30,17 +26,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-
-  frontend:
-    build:
-      context: ./frontend
-    environment:
-      NODE_ENV: production
-    env_file:
-      - path: ./frontend/.env.local
-        required: true
-    ports:
-      - 3000:3000
 
   problem_handler:
     build:
@@ -73,6 +58,19 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - app-network
 
