@@ -14,7 +14,7 @@ export enum probCategory {
 
 // Interface for problem attributes used when creating a new problem
 interface probAttrs {
-  user_id: mongoose.Types.ObjectId;
+  user_id: String;
   problem_data: JSON;
   category: probCategory;
 }
@@ -22,7 +22,7 @@ interface probAttrs {
 // Document interface extending mongoose.Document
 interface probDoc extends mongoose.Document {
   status: probStatus;
-  user_id: mongoose.Types.ObjectId;
+  user_id: String;
   timestamp: Date;
   problem_data: JSON;
   category: probCategory;
@@ -44,7 +44,7 @@ const problemSchema = new mongoose.Schema<probDoc>({
     default: probStatus.Submitted,
   },
   user_id: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     required: true,
   },
   timestamp: {
