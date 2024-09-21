@@ -7,7 +7,7 @@ let channel: Channel;
 
 export const setupRabbitMQListener = async () => {
   try {
-    connection = await amqp.connect("amqp://guest:guest@localhost:5672/");
+    connection = await amqp.connect("amqp://rabbitmq:5672/");
     channel = await connection.createChannel();
 
     const exchange = "problem_exchange";

@@ -31,6 +31,9 @@ router.post(
     const jsonData = req.body;
     const jsonFilePath = path.join(__dirname, TEMP_FILE_NAME);
     fs.writeFileSync(jsonFilePath, JSON.stringify(jsonData, null, 2));
+    
+    console.log("JSON data sent to Python:", jsonData);
+
     const pythonFilePath: string = path.join(
       __dirname,
       "..",
