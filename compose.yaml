@@ -4,11 +4,14 @@ services:
       context: ./frontend
     environment:
       NODE_ENV: production
+      PROBLEM_HANDLER_API_URL: http://problem_handler:3002
     env_file:
       - path: ./frontend/.env.local
         required: true
     ports:
       - 3000:3000
+    networks:
+      - app-network
 
   credits:
     build:
