@@ -29,17 +29,14 @@ router.post(
   validateRequest,
   (req: Request, res: Response) => {
     const jsonData = req.body;
-    const jsonFilePath = path.join(__dirname, TEMP_FILE_NAME);
+    const jsonFilePath = path.join("/tmp", TEMP_FILE_NAME);
+
     fs.writeFileSync(jsonFilePath, JSON.stringify(jsonData, null, 2));
     
     console.log("JSON data sent to Python:", jsonData);
 
-    const pythonFilePath: string = path.join(
-      __dirname,
-      "..",
-      "py",
-      "linearSolver.py"
-    );
+    const pythonFilePath: string = path.join(__dirname, "py", "linearSolver.py");
+
     const pythonArgs: string[] = [pythonFilePath, jsonFilePath];
     let outputData = "";
 

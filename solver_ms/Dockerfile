@@ -1,40 +1,39 @@
-# syntax=docker/dockerfile:1
-
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
+# Use a Debian-based Node.js image instead of Alpine
 ARG NODE_VERSION=20.13.1
+FROM node:${NODE_VERSION}-bullseye-slim as base
 
-################################################################################
-# Use node image for base image for all stages.
-FROM node:${NODE_VERSION}-alpine as base
+# Install Python and pip
+RUN apt-get update && apt-get install -y python3 python3-venv python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory for all build stages.
 WORKDIR /usr/src/app
 
 
+
 ################################################################################
-# Create a stage for installing production dependecies.
+# Create a stage for installing production dependencies.
 FROM base as deps
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.npm to speed up subsequent builds.
-# Leverage bind mounts to package.json and package-lock.json to avoid having to copy them
-# into this layer.
+# Install Node.js dependencies
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev
 
+# Install Python dependencies using a virtual environment
+COPY requirements.txt .
+
+# Create and activate a virtual environment
+RUN python3 -m venv /venv \
+    && . /venv/bin/activate \
+    && pip install --no-cache-dir -r requirements.txt
+
 ################################################################################
 # Create a stage for building the application.
 FROM deps as build
 
-# Download additional development dependencies before building, as some projects require
-# "devDependencies" to be installed to build. If you don't need this, remove this step.
+# Install development dependencies
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
@@ -42,12 +41,12 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 
 # Copy the rest of the source files into the image.
 COPY . .
-# Run the build script.
+
+# Run the build script for the Node.js project.
 RUN npm run build
 
 ################################################################################
-# Create a new stage to run the application with minimal runtime dependencies
-# where the necessary files are copied from the build stage.
+# Create a new stage to run the application with minimal runtime dependencies.
 FROM base as final
 
 # Use production node environment by default.
@@ -59,15 +58,16 @@ USER node
 # Copy package.json so that package manager commands can be used.
 COPY package.json .
 
-
-# Copy the production dependencies from the deps stage and also
-# the built application from the build stage into the image.
+# Copy the production dependencies from the deps stage
+# and the built application from the build stage into the image.
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 
-
+# Copy the Python virtual environment from the deps stage
+COPY --from=deps /venv /venv
+COPY ./src/py ./dist/utilities/py
 # Expose the port that the application listens on.
 EXPOSE 3003
 
-# Run the application.
-CMD npm start
+# Activate virtual environment and run the application.
+CMD . /venv/bin/activate && npm start

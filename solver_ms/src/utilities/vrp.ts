@@ -17,15 +17,10 @@ export const solveVrpProblem = async (
 ): Promise<LinearProblemSolution> => {
   return new Promise((resolve, reject) => {
     try {
-      const jsonFilePath = path.join(__dirname, TEMP_FILE_NAME);
+      const jsonFilePath = path.join("/tmp", TEMP_FILE_NAME);
       fs.writeFileSync(jsonFilePath, JSON.stringify(input, null, 2));
 
-      const pythonFilePath: string = path.join(
-        __dirname,
-        "..",
-        "py",
-        "vrpSolver.py"
-      );
+      const pythonFilePath: string = path.join(__dirname, "py", "vrpSolver.py");
 
       const pythonArgs: string[] = [
         pythonFilePath,

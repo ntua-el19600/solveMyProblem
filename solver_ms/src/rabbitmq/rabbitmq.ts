@@ -90,6 +90,7 @@ export const setupRabbitMQListener = async () => {
             }
           } catch (error) {
             console.error("Error processing message:");
+            console.log(error);
             const mynhma = {
               solution: "none",
               elapsedTime: 0,

@@ -14,15 +14,12 @@ export const solveLinearProblem = async (
 ): Promise<LinearProblemSolution> => {
   return new Promise((resolve, reject) => {
     try {
-      const jsonFilePath = path.join(__dirname, TEMP_FILE_NAME);
+      const jsonFilePath = path.join("/tmp", TEMP_FILE_NAME);
       fs.writeFileSync(jsonFilePath, JSON.stringify(input, null, 2));
+      console.log(__dirname);
+      const pythonFilePath: string = path.join(__dirname, "py", "linearSolver.py");
+      
 
-      const pythonFilePath: string = path.join(
-        __dirname,
-        "..",
-        "py",
-        "linearSolver.py"
-      );
       const pythonArgs: string[] = [pythonFilePath, jsonFilePath];
       let outputData = "";
 
@@ -37,7 +34,7 @@ export const solveLinearProblem = async (
       });
 
       pythonProcess.stderr.on("data", (data: Buffer) => {
-        console.error(`Error: ${data.toString()}`);
+        console.log(`Error: ${data.toString()}`);
       });
 
       pythonProcess.on("close", (code: number) => {

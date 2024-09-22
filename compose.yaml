@@ -55,6 +55,7 @@ services:
         required: true
     ports:
       - "3003:3003"
+    command: ["/bin/sh", "-c", ". /venv/bin/activate && npm start"]
     depends_on:
       rabbitmq:
         condition: service_healthy

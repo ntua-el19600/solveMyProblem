@@ -28,15 +28,10 @@ router.post(
   (req: Request, res: Response) => {
     const { num_vehicles, depot, max_distance, json } = req.body;
 
-    const jsonFilePath = path.join(__dirname, TEMP_FILE_NAME);
+    const jsonFilePath = path.join("/tmp", TEMP_FILE_NAME);
     fs.writeFileSync(jsonFilePath, JSON.stringify(json, null, 2));
 
-    const pythonFilePath: string = path.join(
-      __dirname,
-      "..",
-      "py",
-      "vrpSolver.py"
-    );
+    const pythonFilePath: string = path.join(__dirname, "py", "vrpSolver.py");
 
     const arg3 = num_vehicles.toString();
     const arg4 = depot.toString();
