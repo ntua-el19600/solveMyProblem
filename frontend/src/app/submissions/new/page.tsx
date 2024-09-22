@@ -1,14 +1,20 @@
 'use client'
 import {
+  Alert,
   Button,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
   SelectChangeEvent,
+  Snackbar,
   TextField
 } from '@mui/material'
 import React, {useState, useEffect, ChangeEvent} from 'react'
+import {useUser} from '@clerk/nextjs'
+import {useRouter} from 'next/navigation'
+
+const PROBLEM_HANDLER_API_URL = process.env.NEXT_PUBLIC_PROBLEM_HANDLER_API_URL
 
 const LINEAR = 'linear'
 const LINEAR_COST = 50
@@ -22,10 +28,17 @@ const modelToCostMap = {
 }
 
 export default function Home() {
+  const {user} = useUser()
+  const router = useRouter()
   const [dateTime, setDateTime] = useState('')
   const [model, setModel] = useState('')
   const [jsonInput, setJsonInput] = useState('')
   const [helperText, setHelperText] = useState('')
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState('')
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>(
+    'success'
+  )
 
   useEffect(() => {
     const updateTime = () => setDateTime(new Date().toLocaleString())
@@ -33,11 +46,6 @@ export default function Home() {
     const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
   }, [])
-
-  const handleSubmit = async () => {
-    try {
-    } catch {}
-  }
 
   const handleJsonInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value
@@ -68,6 +76,60 @@ export default function Home() {
       }
     }
   }
+
+  const handleSubmit = async () => {
+    if (!user) return
+
+    const userId = user.id
+    const payload = {
+      userId,
+      category: model,
+      json: JSON.parse(jsonInput)
+    }
+
+    try {
+      const response = await fetch(
+        `${PROBLEM_HANDLER_API_URL}/api/probhandler/addproblem`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSnackbarMessage('Problem submitted successfully!')
+        setSnackbarSeverity('success')
+      } else {
+        if (data.errors && data.errors.length > 0) {
+          const errorMessage = data.errors[0].message
+          const errorField = data.errors[0].field
+          setSnackbarMessage(
+            `Error: ${errorMessage} for the ${errorField} field`
+          )
+        } else {
+          setSnackbarMessage('Failed to submit problem')
+        }
+        setSnackbarSeverity('error')
+      }
+    } catch (error) {
+      setSnackbarMessage('An error occurred. Please try again.')
+      setSnackbarSeverity('error')
+    } finally {
+      setSnackbarOpen(true)
+    }
+  }
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false)
+    setSnackbarMessage('')
+  }
+
+  const handleClick = (route: string) => router.push(route)
 
   return (
     <>
@@ -131,14 +193,41 @@ export default function Home() {
             </div>
           )}
           <Button
-            className="!outline !outline-1 !outline-blue-500 hover:!outline-2 !text-blue-500 !mt-2 disabled:!outline-current"
-            disabled={!model || !!helperText}
+            className="!mt-2"
+            disabled={!model || !!helperText || !jsonInput}
             onClick={handleSubmit}
+            variant="outlined"
           >
             Submit
           </Button>
         </div>
       </div>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+      >
+        <Alert
+          action={
+            snackbarSeverity === 'success' ? (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => handleClick('/submissions/list')}
+              >
+                See list
+              </Button>
+            ) : undefined
+          }
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{width: '100%'}}
+          variant="filled"
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   )
 }

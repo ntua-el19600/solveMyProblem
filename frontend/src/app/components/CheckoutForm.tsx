@@ -97,7 +97,11 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
         autoHideDuration={6000}
         onClose={() => setSuccessMessage(null)}
       >
-        <Alert onClose={() => setSuccessMessage(null)} severity="success">
+        <Alert
+          onClose={() => setSuccessMessage(null)}
+          severity="success"
+          variant="filled"
+        >
           {successMessage}
         </Alert>
       </Snackbar>

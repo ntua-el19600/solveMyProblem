@@ -78,8 +78,9 @@ export default function Home() {
         </Box>
       </Box>
       <Button
-        className="!outline !outline-1 !outline-blue-500 hover:!outline-2 !text-blue-500 !mt-4 disabled:!outline-current !capitalize"
+        className="!mt-4 !capitalize"
         onClick={() => handleClick('/submissions/new')}
+        variant="outlined"
       >
         Submit your problem now!
       </Button>
