@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 
 const router = express.Router();
 
-router.get("/api/probhandler/statistics", async (req: Request, res: Response) => {
+router.post("/api/probhandler/statistics", async (req: Request, res: Response) => {
   const { userId } = req.body;  // Assuming the userId is in the format 'user_xxx'
 
   if (!userId || !userId.startsWith("user_")) {
