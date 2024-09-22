@@ -41,6 +41,12 @@ export const NavBar: FC = () => {
             >
               New submission
             </Button>
+            <Button
+              className="!text-white hover:outline hover:outline-1 hover:outline-white !capitalize"
+              onClick={() => handleClick('/statistics')}
+            >
+              Statistics
+            </Button>
           </div>
           <div className="flex align-middle gap-4">
             <Chip

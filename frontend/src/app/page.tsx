@@ -84,7 +84,7 @@ export default function Home() {
       >
         Submit your problem now!
       </Button>
-      <div className="absolute top-4 right-4 text-right">
+      <div className="absolute top-16 right-4 text-right">
         <p>{`Current Date/Time: ${dateTime}` || 'Loading...'}</p>
       </div>
     </div>

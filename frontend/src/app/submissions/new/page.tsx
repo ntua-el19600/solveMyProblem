@@ -87,20 +87,17 @@ export default function Home() {
       json: JSON.parse(jsonInput)
     }
 
+    const response = await fetch('/api/new-proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+
+    const data = await response.json()
+
     try {
-      const response = await fetch(
-        `${PROBLEM_HANDLER_API_URL}/api/probhandler/addproblem`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        }
-      )
-
-      const data = await response.json()
-
       if (response.ok) {
         setSnackbarMessage('Problem submitted successfully!')
         setSnackbarSeverity('success')
@@ -133,7 +130,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="absolute top-4 right-4 text-right">
+      <div className="absolute top-16 right-4 text-right">
         <p>{`Current Date/Time: ${dateTime}` || 'Loading...'}</p>
       </div>
       <div className="!w-full !grid !place-items-center !mt-14">

@@ -1,18 +1,19 @@
 'use client'
 import {
   Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  TableRow
 } from '@mui/material'
 import {useRouter} from 'next/navigation'
 import {useUser} from '@clerk/nextjs'
@@ -39,6 +40,7 @@ export default function Home() {
   const [selectedProblemData, setSelectedProblemData] = useState<object | null>(
     null
   )
+  const [selectedSolution, setSelectedSolution] = useState<string | null>(null)
 
   const handleClick = (route: string) => router.push(route)
 
@@ -56,18 +58,15 @@ export default function Home() {
       userId: user.id
     }
 
-    try {
-      const response = await fetch(
-        `${PROBLEM_HANDLER_API_URL}/api/probhandler/userProblems`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        }
-      )
+    const response = await fetch('/api/list-proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
 
+    try {
       if (!response.ok) {
         throw new Error('Failed to fetch problem data')
       }
@@ -109,16 +108,31 @@ export default function Home() {
     setOpen(false)
     setTimeout(() => {
       setSelectedProblemData(null)
+      setSelectedSolution(null)
     }, 200)
+  }
+
+  const handleSolutionClick = (solution: string) => {
+    setSelectedSolution(solution)
+    setOpen(true)
+  }
+
+  const renderSolution = (solution: string) => {
+    return solution.split('\n').map((line, index) => (
+      <span key={index}>
+        {line}
+        <br />
+      </span>
+    ))
   }
 
   return (
     <>
-      <div className="absolute top-4 right-4 text-right">
+      <div className="absolute top-16 right-4 text-right">
         <p>{`Current Date/Time: ${dateTime}` || 'Loading...'}</p>
       </div>
       <Button
-        className="!mt-14"
+        className="!mt-6"
         onClick={() => handleClick('/submissions/new')}
         variant="outlined"
       >
@@ -143,7 +157,7 @@ export default function Home() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  Loading...
+                  <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : (
@@ -173,7 +187,18 @@ export default function Home() {
                       View Data
                     </Button>
                   </TableCell>
-                  <TableCell>{row.solution || 'N/A'}</TableCell>
+                  <TableCell>
+                    {row.status.toLowerCase() === 'complete' ? (
+                      <Button
+                        variant="outlined"
+                        onClick={() => handleSolutionClick(row.solution)}
+                      >
+                        View Solution
+                      </Button>
+                    ) : (
+                      capitalize(row.solution)
+                    )}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -182,10 +207,13 @@ export default function Home() {
       </TableContainer>
 
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Problem Data</DialogTitle>
+        {selectedProblemData && <DialogTitle>Problem Data</DialogTitle>}
+        {selectedSolution && <DialogTitle>Solution</DialogTitle>}
         <DialogContent>
           {selectedProblemData ? (
             <pre>{JSON.stringify(selectedProblemData, null, 2)}</pre>
+          ) : selectedSolution ? (
+            <div>{renderSolution(selectedSolution)}</div>
           ) : (
             <p>No data available</p>
           )}
