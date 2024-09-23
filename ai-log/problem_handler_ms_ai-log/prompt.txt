@@ -1,0 +1,339 @@
+User: 
+-----
+I want to build a problem_handler microservice using node, typescript, mongoDB and RabbitMQ. 
+The ms receives either a Vrp or a linear problem (json) at the endpoint "/api/probhandler/addproblem" 
+and then it saves it in the database with a status of "submitted" . 
+It also sends it through a queue and an exchange to another ms i have running for solving the problem. 
+There is also a second queue and exchange for transferring the solution from the solver ms to the problem_handler ms. 
+When the solution is received, update the database changing the status to "completed" and setting the solution and the elapsed time. 
+The json file for a vrp problem looks like this {
+    "category": "vrp",
+    "json": {
+        "num_vehicles":"3",
+        "depot": "0",
+        "max_distance":"7999999",
+        "locations" : {
+  "Locations": [
+    {
+      "Latitude": 37.9998332818384,
+      "Longitude": 23.7431771479843
+    },
+    {
+      "Latitude": 37.966783510526,
+      "Longitude": 23.7786055336422
+    },
+    {
+      "Latitude": 37.9990464764814,
+      "Longitude": 23.7732513981902
+    },
+    {
+      "Latitude": 37.9740702363407,
+      "Longitude": 23.7375198905651
+    },
+    {
+      "Latitude": 37.9976370555679,
+      "Longitude": 23.766326699717
+    },
+    {
+      "Latitude": 37.9871581852694,
+      "Longitude": 23.7600403988099
+    },
+    {
+      "Latitude": 37.9656595261289,
+      "Longitude": 23.7804481656328
+    },
+    {
+      "Latitude": 38.0081619401188,
+      "Longitude": 23.7437267361884
+    },
+    {
+      "Latitude": 37.9834746564623,
+      "Longitude": 23.7325686491771
+    },
+    {
+      "Latitude": 37.9636241334636,
+      "Longitude": 23.7778582015461
+    },
+    {
+      "Latitude": 37.9658106007088,
+      "Longitude": 23.7213368725731
+    },
+    {
+      "Latitude": 37.9762429354646,
+      "Longitude": 23.7402382017401
+    },
+    {
+      "Latitude": 38.0056680973323,
+      "Longitude": 23.7280890826921
+    },
+    {
+      "Latitude": 38.0013238772217,
+      "Longitude": 23.7583040097244
+    },
+    {
+      "Latitude": 37.9632024791509,
+      "Longitude": 23.7851749644623
+    },
+    {
+      "Latitude": 37.9653577058191,
+      "Longitude": 23.743200049927
+    },
+    {
+      "Latitude": 37.9692186084866,
+      "Longitude": 23.7851108524873
+    },
+    {
+      "Latitude": 37.9827169763799,
+      "Longitude": 23.7354215305124
+    },
+    {
+      "Latitude": 37.9723001307611,
+      "Longitude": 23.7884239333305
+    },
+    {
+      "Latitude": 37.9782788027907,
+      "Longitude": 23.7588455894457
+    }
+  ]
+}
+
+
+
+
+
+
+    }
+} and for a linear problem looks like this {
+    "category": "linear",
+    "json": {
+
+    "Variables": ["x", "y"],
+    "Constraints": [
+        "x <= 5",
+        "y <= 2"
+    ],
+    "Objective": "Maximize 3 * x + 4 * y"
+}
+    }
+
+chatGPT:
+-------
+
+To build the problem_handler microservice using Node.js, TypeScript, MongoDB, and RabbitMQ, 
+we will need to structure the code into the following main components:
+
+API Endpoint: Receive a problem (either VRP or linear) via POST request.
+Database Integration: Save the problem with a submitted status to MongoDB.
+Message Queues:
+Send the problem to the solver microservice via RabbitMQ.
+Listen for a solution from the solver and update the problem status in MongoDB.
+
+Steps to Implement:
+1. Initialize the Project
+
+bash
+mkdir problem_handler_service
+cd problem_handler_service
+npm init -y
+npm install express mongoose amqplib uuid body-parser
+npm install typescript @types/express @types/mongoose @types/node --save-dev
+npx tsc --init
+
+2. Configure MongoDB
+
+In src/config/database.ts:
+
+import mongoose from 'mongoose';
+
+const connectDB = async () => {
+    try {
+        await mongoose.connect('mongodb://localhost:27017/problemhandler', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('MongoDB connected');
+    } catch (err) {
+        console.error('Error connecting to MongoDB', err);
+    }
+};
+
+export default connectDB;
+
+3. Define Problem Schema
+
+In src/models/problem.ts:
+
+import mongoose, { Document } from 'mongoose';
+
+interface Problem extends Document {
+    category: string;
+    json: object;
+    status: string;
+    solution?: object;
+    elapsedTime?: number;
+}
+
+const ProblemSchema = new mongoose.Schema({
+    category: { type: String, required: true },
+    json: { type: Object, required: true },
+    status: { type: String, default: 'submitted' },
+    solution: { type: Object, default: null },
+    elapsedTime: { type: Number, default: null },
+}, { timestamps: true });
+
+const ProblemModel = mongoose.model<Problem>('Problem', ProblemSchema);
+
+export default ProblemModel;
+
+4. Create the API Endpoint
+
+In src/routes/problemRoutes.ts:
+
+import express, { Request, Response } from 'express';
+import ProblemModel from '../models/problem';
+import { sendToSolverQueue } from '../services/rabbitMQ';
+import { v4 as uuidv4 } from 'uuid';
+
+const router = express.Router();
+
+router.post('/addproblem', async (req: Request, res: Response) => {
+    try {
+        const { category, json } = req.body;
+
+        if (!category || !json) {
+            return res.status(400).json({ error: 'Invalid data format' });
+        }
+
+        const problem = new ProblemModel({ category, json });
+        const savedProblem = await problem.save();
+
+        const problemId = savedProblem._id.toString();
+        const problemWithId = { ...savedProblem.toObject(), id: problemId };
+
+        // Send the problem to the solver queue
+        sendToSolverQueue(problemWithId);
+
+        res.status(201).json({ message: 'Problem submitted', problemId });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+export default router;
+
+5. RabbitMQ Setup
+
+Create a RabbitMQ connection to manage sending problems to the solver and receiving solutions.
+
+In src/services/rabbitMQ.ts:
+
+import amqp from 'amqplib';
+import ProblemModel from '../models/problem';
+import { performance } from 'perf_hooks';
+
+const QUEUE_SOLVER = 'solver_queue';
+const QUEUE_SOLUTION = 'solution_queue';
+let connection: amqp.Connection;
+let channel: amqp.Channel;
+
+export const connectRabbitMQ = async () => {
+    try {
+        connection = await amqp.connect('amqp://localhost');
+        channel = await connection.createChannel();
+
+        await channel.assertQueue(QUEUE_SOLVER, { durable: true });
+        await channel.assertQueue(QUEUE_SOLUTION, { durable: true });
+
+        console.log('Connected to RabbitMQ');
+    } catch (err) {
+        console.error('Error connecting to RabbitMQ', err);
+    }
+};
+
+// Send problem to solver microservice
+export const sendToSolverQueue = async (problem: object) => {
+    try {
+        channel.sendToQueue(QUEUE_SOLVER, Buffer.from(JSON.stringify(problem)), { persistent: true });
+        console.log(`Problem sent to solver queue: ${problem}`);
+    } catch (error) {
+        console.error('Error sending message to solver queue', error);
+    }
+};
+
+// Listen for solutions from solver microservice
+export const listenForSolutions = async () => {
+    channel.consume(QUEUE_SOLUTION, async (msg) => {
+        if (msg) {
+            const startTime = performance.now();
+            const solution = JSON.parse(msg.content.toString());
+            const problemId = solution.id;
+
+            const problem = await ProblemModel.findById(problemId);
+            if (problem) {
+                problem.status = 'completed';
+                problem.solution = solution;
+                const elapsedTime = performance.now() - startTime;
+                problem.elapsedTime = elapsedTime;
+
+                await problem.save();
+                console.log(`Problem ${problemId} updated with solution`);
+            }
+
+            channel.ack(msg);
+        }
+    });
+};
+
+6. Main Application File
+
+In src/app.ts:
+
+import express from 'express';
+import bodyParser from 'body-parser';
+import connectDB from './config/database';
+import problemRoutes from './routes/problemRoutes';
+import { connectRabbitMQ, listenForSolutions } from './services/rabbitMQ';
+
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.json());
+
+// Connect to MongoDB
+connectDB();
+
+// RabbitMQ connection
+connectRabbitMQ().then(() => listenForSolutions());
+
+// API routes
+app.use('/api/probhandler', problemRoutes);
+
+// Start server
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+7. Handling VRP and Linear Problems
+
+In the POST /api/probhandler/addproblem, both VRP and Linear problems are treated as generic JSON objects, and the category field is used to differentiate between the two types.
+
+RabbitMQ Integration with Solver Service
+
+The solver microservice is responsible for picking problems from the solver_queue, processing them, and pushing the solution to solution_queue.
+
+Running the Service
+Ensure MongoDB and RabbitMQ are running on your local machine.
+Start the service:
+
+bash
+
+npm run start
+
+This structure will enable you to submit VRP or Linear problems, persist them in MongoDB, 
+communicate with your solver microservice via RabbitMQ, and handle the solution when it's available.
+
+
+
+
+
+

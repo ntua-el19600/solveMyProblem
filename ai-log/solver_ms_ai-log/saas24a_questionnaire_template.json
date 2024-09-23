@@ -1,0 +1,23 @@
+{
+    "answers": {
+        "phase": "coding",
+        "action": "source code authoring",
+        "scope": "backend",
+        "action experience": 3,
+        "prog lang": "js-node",
+        "other prog lang": "<fill in>",
+        "aimodel": "chatgpt",
+        "aimodel version": "chatGPT-4o",
+        "lmstudio-hosted aimodel": "<fill-in>",
+        "tool option": "online free",
+        "experience with tool": 3,
+        "time allocated (h)": 6,
+        "time saved estimate (h)": 3, 
+        "quality of ai help": 3,
+        "knowledge acquired": 4,
+        "generic feeling - now": 3,
+        "generic feeling - future": 4,
+        "threat level": 0,
+        "notes": "<fill in>"
+    }
+}
