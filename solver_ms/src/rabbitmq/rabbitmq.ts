@@ -2,6 +2,9 @@ import amqp, { Connection, Channel, ConsumeMessage } from "amqplib";
 import { solveLinearProblem } from "../utilities/linear";
 import { solveVrpProblem } from "../utilities/vrp";
 
+
+
+
 let connection: Connection;
 let channel: Channel;
 
@@ -63,10 +66,12 @@ export const setupRabbitMQListener = async () => {
                 solution: result.solution,
                 elapsedTime: result.elapsedTime,
                 id: message.id,
+                userId: message.userId,
               };
               const myn = JSON.stringify(mynhma);
 
               await publishToQueue(myn);
+              
               channel.ack(msg);
             } else if (message.category === "vrp") {
               const problem_data_vrp = JSON.stringify(problem_data.locations);
@@ -81,8 +86,10 @@ export const setupRabbitMQListener = async () => {
                 solution: result.solution,
                 elapsedTime: result.elapsedTime,
                 id: message.id,
+                userId: message.userId,
               };
               const myn = JSON.stringify(mynhma);
+              
               await publishToQueue(myn);
               channel.ack(msg);
             } else {
@@ -95,6 +102,7 @@ export const setupRabbitMQListener = async () => {
               solution: "none",
               elapsedTime: 0,
               id: message.id,
+              userId: message.userId,
             };
             const myn = JSON.stringify(mynhma);
             await publishToQueue(myn);

@@ -40,6 +40,7 @@ router.post(
 
       await newProblem.save();
       const message = {
+        userId: problemAttrs.user_id,
         category: problemAttrs.category,
         problem_data: problemAttrs.problem_data,
         id: newProblem.id,

@@ -74,3 +74,22 @@ export const getCredits = async (req: Request, res: Response) => {
     res.status(500).json({ error: err.message || 'Server error' });
   }
 };
+
+export const reduceCredits = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+
+  try {
+    const userCredit = await Credit.findOne({ userId });
+
+    if (!userCredit) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    userCredit.credits = Math.max(0, userCredit.credits - 1); // Prevent negative credits
+    await userCredit.save();
+
+    res.status(200).json({ message: "Credits updated successfully", credits: userCredit.credits });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update credits" });
+  }
+};
