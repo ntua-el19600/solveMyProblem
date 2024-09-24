@@ -75,7 +75,30 @@ export const getCredits = async (req: Request, res: Response) => {
   }
 };
 
-export const reduceCredits = async (req: Request, res: Response) => {
+export const reduceCreditsLinear = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+
+  try {
+    const userCredit = await Credit.findOne({ userId });
+
+    if (!userCredit) {
+      return res.status(404).json({ message: "User not found" });
+    }
+   
+    if (userCredit.credits < 3) {
+      return res.status(400).json({ message: "Insufficient credits. At least 3 credits are required." });
+    }
+
+    userCredit.credits = Math.max(0, userCredit.credits - 3); // Prevent negative credits
+    await userCredit.save();
+
+    res.status(200).json({ message: "Credits updated successfully", credits: userCredit.credits });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update credits" });
+  }
+};
+
+export const reduceCreditsVrp = async (req: Request, res: Response) => {
   const { userId } = req.body;
 
   try {
@@ -85,7 +108,11 @@ export const reduceCredits = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    userCredit.credits = Math.max(0, userCredit.credits - 1); // Prevent negative credits
+    if (userCredit.credits < 5) {
+      return res.status(400).json({ message: "Insufficient credits. At least 5 credits are required." });
+    }
+    
+    userCredit.credits = Math.max(0, userCredit.credits - 5); // Prevent negative credits
     await userCredit.save();
 
     res.status(200).json({ message: "Credits updated successfully", credits: userCredit.credits });

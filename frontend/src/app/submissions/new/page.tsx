@@ -17,10 +17,10 @@ import {useRouter} from 'next/navigation'
 const PROBLEM_HANDLER_API_URL = process.env.NEXT_PUBLIC_PROBLEM_HANDLER_API_URL
 
 const LINEAR = 'linear'
-const LINEAR_COST = 50
+const LINEAR_COST = 3
 
 const VRP = 'vrp'
-const VRP_COST = 150
+const VRP_COST = 5
 
 const modelToCostMap = {
   [LINEAR]: LINEAR_COST,

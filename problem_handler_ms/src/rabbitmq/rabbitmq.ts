@@ -4,21 +4,6 @@ import mongoose from "mongoose";
 import { probStatus } from "../models/problem";
 let connection: Connection;
 let channel: Channel;
-import axios from "axios"; 
-
-const deductUserCredits = async (userId: String) => {
-  try {
-    const response = await axios.post("http://credits:3001/api/credits/reduce", {
-      userId: userId, // Include user ID or other necessary data
-    });
-
-    console.log(`Credits deducted for user ${userId}: ${response.data}`);
-  } catch (error) {
-    console.log(`Failed to deduct credits for user ${userId}:`);
-  }
-};
-
-
 
 
 export const setupRabbitMQ = async () => {
@@ -72,7 +57,6 @@ export const setupRabbitMQ = async () => {
             var statusx = probStatus.Cancelled;
           } else {
             var statusx = probStatus.Complete;
-            await deductUserCredits(userId);
           }
 
           const result = await Problem.updateOne(
