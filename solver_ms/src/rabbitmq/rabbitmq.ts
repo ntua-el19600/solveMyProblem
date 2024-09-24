@@ -74,9 +74,11 @@ export const setupRabbitMQListener = async () => {
         if (msg) {
           const messageContent = msg.content.toString();
           console.log("Message received:", messageContent);
+          
+          const message = JSON.parse(messageContent);
 
           try {
-            const message = JSON.parse(messageContent);
+            
 
             const deductionSuccess = await deductUserCredits(message.userId, message.category);
             if (!deductionSuccess) {
@@ -123,11 +125,17 @@ export const setupRabbitMQListener = async () => {
 
               await publishToQueue(myn);
               channel.ack(msg); // Acknowledge message after solving
-            } else {
-              throw new Error("Unknown category");
-            }
+            } 
           } catch (error) {
             console.error("Error processing message:");
+            const mynhma = {
+              solution: "none",
+              elapsedTime: 0,
+              id: message.id,
+              userId: message.userId,
+            };
+            const myn = JSON.stringify(mynhma);
+            await publishToQueue(myn);
             console.log(error);
             channel.ack(msg); // Acknowledge message even if there is an error
           }

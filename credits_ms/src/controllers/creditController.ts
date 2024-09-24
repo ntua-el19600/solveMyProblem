@@ -79,21 +79,19 @@ export const reduceCredits = async (req: Request, res: Response) => {
   const COST = category === 'linear' ? 3 : 5;
 
   try {
-    const userCredit = await Credit.findOne({ userId });
+    const userCredit = await Credit.findOneAndUpdate(
+      { userId, credits: { $gte: COST } }, // Ensure the user exists and has enough credits
+      { $inc: { credits: -COST } },        // Atomically reduce credits
+      { new: true }                        // Return the updated document
+    );
 
     if (!userCredit) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found or insufficient credits." });
     }
-   
-    if (userCredit.credits < COST) {
-      return res.status(400).json({ message: `Insufficient credits. At least ${COST} credits are required.` });
-    }
-
-    userCredit.credits -= COST;
-    await userCredit.save();
 
     res.status(200).json({ message: "Credits updated successfully", credits: userCredit.credits });
   } catch (error) {
+    console.error('Error reducing credits:', error);
     res.status(500).json({ error: "Failed to update credits" });
   }
 };
