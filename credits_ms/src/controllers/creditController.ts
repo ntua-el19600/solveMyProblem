@@ -9,7 +9,6 @@ dotenv.config({ path: '.env.local' });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2024-06-20' });
 
-
 export const purchaseCredits = async (req: Request, res: Response) => {
   const { userId, credits, paymentMethodId } = req.body;
 
@@ -75,8 +74,9 @@ export const getCredits = async (req: Request, res: Response) => {
   }
 };
 
-export const reduceCreditsLinear = async (req: Request, res: Response) => {
-  const { userId } = req.body;
+export const reduceCredits = async (req: Request, res: Response) => {
+  const { userId, category } = req.body;
+  const COST = category === 'linear' ? 3 : 5;
 
   try {
     const userCredit = await Credit.findOne({ userId });
@@ -85,34 +85,11 @@ export const reduceCreditsLinear = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
    
-    if (userCredit.credits < 3) {
-      return res.status(400).json({ message: "Insufficient credits. At least 3 credits are required." });
+    if (userCredit.credits < COST) {
+      return res.status(400).json({ message: `Insufficient credits. At least ${COST} credits are required.` });
     }
 
-    userCredit.credits = Math.max(0, userCredit.credits - 3); // Prevent negative credits
-    await userCredit.save();
-
-    res.status(200).json({ message: "Credits updated successfully", credits: userCredit.credits });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update credits" });
-  }
-};
-
-export const reduceCreditsVrp = async (req: Request, res: Response) => {
-  const { userId } = req.body;
-
-  try {
-    const userCredit = await Credit.findOne({ userId });
-
-    if (!userCredit) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (userCredit.credits < 5) {
-      return res.status(400).json({ message: "Insufficient credits. At least 5 credits are required." });
-    }
-    
-    userCredit.credits = Math.max(0, userCredit.credits - 5); // Prevent negative credits
+    userCredit.credits -= COST;
     await userCredit.save();
 
     res.status(200).json({ message: "Credits updated successfully", credits: userCredit.credits });

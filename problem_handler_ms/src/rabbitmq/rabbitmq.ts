@@ -1,10 +1,9 @@
 import amqp, { Connection, Channel, ConsumeMessage } from "amqplib";
 import { Problem } from "../models/problem";
-import mongoose from "mongoose";
 import { probStatus } from "../models/problem";
+
 let connection: Connection;
 let channel: Channel;
-
 
 export const setupRabbitMQ = async () => {
   try {

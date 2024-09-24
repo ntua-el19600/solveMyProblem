@@ -3,36 +3,11 @@ import { solveLinearProblem } from "../utilities/linear";
 import { solveVrpProblem } from "../utilities/vrp";
 import axios from "axios";
 
-const deductUserCreditsLinear = async (userId: String): Promise<boolean> => {
+const deductUserCredits = async (userId: String, category: String): Promise<boolean> => {
   try {
-    const response = await axios.post("http://credits:3001/api/credits/reduce_linear", {
-      userId: userId, // Include user ID or other necessary data
-    });
-
-    console.log(`Credits deducted for user ${userId}: ${response.data}`);
-    return true; // Deduction was successful
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Check if the error is an AxiosError to handle API response errors
-      if (error.response && error.response.status === 400) {
-        console.log(`Insufficient credits for user ${userId}`);
-      } else {
-        console.log(`Failed to deduct credits for user ${userId}: ${error.message}`);
-      }
-    } else if (error instanceof Error) {
-      // Handle general error
-      console.log(`An unexpected error occurred: ${error.message}`);
-    } else {
-      console.log(`Unknown error occurred: ${error}`);
-    }
-    return false; // Deduction failed (insufficient credits or other error)
-  }
-};
-
-const deductUserCreditsVrp = async (userId: String): Promise<boolean> => {
-  try {
-    const response = await axios.post("http://credits:3001/api/credits/reduce_vrp", {
-      userId: userId, // Include user ID or other necessary data
+    const response = await axios.post("http://credits:3001/api/credits/reduce", {
+      userId: userId,
+      category: category
     });
 
     console.log(`Credits deducted for user ${userId}: ${response.data}`);
@@ -103,18 +78,16 @@ export const setupRabbitMQListener = async () => {
           try {
             const message = JSON.parse(messageContent);
 
+            const deductionSuccess = await deductUserCredits(message.userId, message.category);
+            if (!deductionSuccess) {
+              channel.ack(msg); // Acknowledge message and stop further processing
+              return;
+            }
+
             const problem = JSON.stringify(message.problem_data);
             const problem_data = JSON.parse(problem);
 
-            let deductionSuccess = false;
-
             if (message.category === "linear") {
-              deductionSuccess = await deductUserCreditsLinear(message.userId);
-              if (!deductionSuccess) {
-                channel.ack(msg); // Acknowledge message and stop further processing
-                return;
-              }
-
               const result = await solveLinearProblem(problem_data);
               console.log("Solution:", result.solution);
               console.log("Elapsed Time:", result.elapsedTime, "ms");
@@ -130,12 +103,6 @@ export const setupRabbitMQListener = async () => {
               await publishToQueue(myn);
               channel.ack(msg); // Acknowledge message after solving
             } else if (message.category === "vrp") {
-              deductionSuccess = await deductUserCreditsVrp(message.userId);
-              if (!deductionSuccess) {
-                channel.ack(msg); // Acknowledge message and stop further processing
-                return;
-              }
-
               const problem_data_vrp = JSON.stringify(problem_data.locations);
               const final = JSON.parse(problem_data_vrp);
               const arg2 = problem_data.num_vehicles;
