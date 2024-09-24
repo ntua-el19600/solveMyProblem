@@ -13,8 +13,7 @@ import {
 import React, {useState, useEffect, ChangeEvent} from 'react'
 import {useUser} from '@clerk/nextjs'
 import {useRouter} from 'next/navigation'
-
-const PROBLEM_HANDLER_API_URL = process.env.NEXT_PUBLIC_PROBLEM_HANDLER_API_URL
+import {useUserContext} from '@/context/UserContext'
 
 const LINEAR = 'linear'
 const LINEAR_COST = 3
@@ -29,6 +28,7 @@ const modelToCostMap = {
 
 export default function Home() {
   const {user} = useUser()
+  const {credits, refreshCredits} = useUserContext()
   const router = useRouter()
   const [dateTime, setDateTime] = useState('')
   const [model, setModel] = useState('')
@@ -80,6 +80,16 @@ export default function Home() {
   const handleSubmit = async () => {
     if (!user) return
 
+    if (
+      (model === 'linear' && credits < LINEAR_COST) ||
+      (model === 'vrp' && credits < VRP_COST)
+    ) {
+      setSnackbarMessage("You don't have enough credits!")
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
+      return
+    }
+
     const userId = user.id
     const payload = {
       userId,
@@ -101,6 +111,9 @@ export default function Home() {
       if (response.ok) {
         setSnackbarMessage('Problem submitted successfully!')
         setSnackbarSeverity('success')
+        setTimeout(() => {
+          refreshCredits()
+        }, 200)
       } else {
         if (data.errors && data.errors.length > 0) {
           const errorMessage = data.errors[0].message
@@ -123,7 +136,6 @@ export default function Home() {
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false)
-    setSnackbarMessage('')
   }
 
   const handleClick = (route: string) => router.push(route)

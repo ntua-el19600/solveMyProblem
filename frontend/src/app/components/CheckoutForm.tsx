@@ -4,14 +4,19 @@ import {useStripe, useElements, CardElement} from '@stripe/react-stripe-js'
 import {useUser} from '@clerk/nextjs'
 import {StripeCardElement} from '@stripe/stripe-js'
 import {Button, Input, Snackbar, Alert} from '@mui/material'
+import {useUserContext} from '@/context/UserContext'
 
 export const CheckoutForm: FC<{className?: string}> = ({className}) => {
   const stripe = useStripe()
   const elements = useElements()
   const {user} = useUser()
+  const {refreshCredits} = useUserContext()
   const [credits, setCredits] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null) // New state for success notification
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>(
+    'success'
+  )
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
 
   const handlePurchase = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -23,7 +28,9 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
     const cardElement = elements.getElement(CardElement) as StripeCardElement
 
     if (!cardElement) {
-      setError('Card Element not found')
+      setSnackbarSeverity('error')
+      setSnackbarMessage('Card Element not found')
+      setSnackbarOpen(true)
       return
     }
 
@@ -33,12 +40,16 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
     })
 
     if (error) {
-      setError(error.message || 'An unknown error occurred')
+      setSnackbarSeverity('error')
+      setSnackbarMessage(error.message || 'An unknown error occurred')
+      setSnackbarOpen(true)
       return
     }
 
     if (!paymentMethod) {
-      setError('Failed to create payment method')
+      setSnackbarSeverity('error')
+      setSnackbarMessage('Failed to create payment method')
+      setSnackbarOpen(true)
       return
     }
 
@@ -60,16 +71,23 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
 
       if (!response.ok) {
         const errorMessage = await response.text()
-        setError(errorMessage || 'Failed to complete purchase')
+        setSnackbarSeverity('error')
+        setSnackbarMessage(errorMessage || 'Failed to complete purchase')
+        setSnackbarOpen(true)
         return
       }
 
-      const data = await response.json()
-      console.log(data)
-      setError(null)
-      setSuccessMessage('Purchase successful!')
+      await response.json()
+      setSnackbarSeverity('success')
+      setSnackbarMessage('Purchase successful!')
+      setSnackbarOpen(true)
+      setTimeout(() => {
+        refreshCredits()
+      }, 200)
     } catch (error) {
-      setError('Failed to complete purchase')
+      setSnackbarSeverity('error')
+      setSnackbarMessage('Failed to complete purchase')
+      setSnackbarOpen(true)
       console.error('Error during purchase:', error)
     }
   }
@@ -89,20 +107,23 @@ export const CheckoutForm: FC<{className?: string}> = ({className}) => {
         <Button type="submit" disabled={!stripe} variant="outlined">
           Purchase
         </Button>
-        {error && <div>{error}</div>}
       </form>
 
       <Snackbar
-        open={Boolean(successMessage)}
+        open={snackbarOpen}
         autoHideDuration={6000}
-        onClose={() => setSuccessMessage(null)}
+        onClose={() => {
+          setSnackbarOpen(false)
+        }}
       >
         <Alert
-          onClose={() => setSuccessMessage(null)}
-          severity="success"
+          onClose={() => {
+            setSnackbarOpen(false)
+          }}
+          severity={snackbarSeverity}
           variant="filled"
         >
-          {successMessage}
+          {snackbarMessage}
         </Alert>
       </Snackbar>
     </>
