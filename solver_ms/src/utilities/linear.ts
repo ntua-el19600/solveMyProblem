@@ -1,8 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
+import * as crypto from "crypto";
 
-const TEMP_FILE_NAME = "linear_temp.json";
+//const TEMP_FILE_NAME = "linear_temp.json";
+
 
 interface LinearProblemSolution {
   solution: string;
@@ -14,6 +16,7 @@ export const solveLinearProblem = async (
 ): Promise<LinearProblemSolution> => {
   return new Promise((resolve, reject) => {
     try {
+      const TEMP_FILE_NAME = `temp_${crypto.randomBytes(16).toString("hex")}.json`;
       const jsonFilePath = path.join("/tmp", TEMP_FILE_NAME);
       fs.writeFileSync(jsonFilePath, JSON.stringify(input, null, 2));
       console.log(__dirname);
