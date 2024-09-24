@@ -26,6 +26,27 @@ const modelToCostMap = {
   [VRP]: VRP_COST
 }
 
+// JSON placeholders for linear and VRP
+const linearPlaceholder = `{
+  "Variables": ["x", "y"],
+  "Constraints": [
+    "x <= 5",
+    "y <= 2"
+  ],
+  "Objective": "Maximize 3 * x + 4 * y"
+}`
+
+const vrpPlaceholder = `{
+  "num_vehicles": "3",
+  "depot": "0",
+  "max_distance": "7999999",
+  "locations": {
+  "Locations": [{"Latitude": 37.9998332818384, "Longitude": 23.7431771479843},
+    // Add other locations here...
+    ]
+  }
+}`
+
 export default function Home() {
   const {user} = useUser()
   const {credits, refreshCredits} = useUserContext()
@@ -81,8 +102,8 @@ export default function Home() {
     if (!user) return
 
     if (
-      (model === 'linear' && credits < LINEAR_COST) ||
-      (model === 'vrp' && credits < VRP_COST)
+      (model === LINEAR && credits < LINEAR_COST) ||
+      (model === VRP && credits < VRP_COST)
     ) {
       setSnackbarMessage("You don't have enough credits!")
       setSnackbarSeverity('error')
@@ -180,15 +201,22 @@ export default function Home() {
           </FormControl>
           <TextField
             className="!mt-4"
-            id="outlined-multiline-json-input"
             label="Json input"
             error={!!helperText}
             fullWidth
             helperText={helperText}
-            rows={6}
+            id="outlined-multiline-json-input"
             multiline
-            required
             onChange={handleJsonInputChange}
+            placeholder={
+              model === LINEAR
+                ? linearPlaceholder
+                : model === VRP
+                  ? vrpPlaceholder
+                  : ''
+            }
+            required
+            rows={9}
             value={jsonInput}
           />
           {model ? (
