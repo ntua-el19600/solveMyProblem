@@ -4,10 +4,13 @@ import express, { Request, Response } from "express";
 const router = express.Router();
 
 router.post("/api/probhandler/delete", async (req: Request, res: Response) => {
-  const { id } = req.body;
+  const { id, userId } = req.body;
 
   try {
-    const deletedProblem = await Problem.findByIdAndDelete(id).exec();
+    const deletedProblem = await Problem.findOneAndDelete({
+      _id: id,
+      user_id: userId,
+    }).exec();
 
     if (deletedProblem) {
       res
