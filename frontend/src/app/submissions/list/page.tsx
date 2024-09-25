@@ -1,5 +1,6 @@
 'use client'
 import {
+  Alert,
   Button,
   Chip,
   CircularProgress,
@@ -7,19 +8,24 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
   Paper,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  capitalize
 } from '@mui/material'
+import {Delete as DeleteIcon} from '@mui/icons-material'
 import {useRouter} from 'next/navigation'
 import {useUser} from '@clerk/nextjs'
 import {useState, useEffect} from 'react'
 
 interface Problem {
+  _id: string
   status: string
   timestamp: string
   problem_data: object
@@ -41,6 +47,13 @@ export default function Home() {
     null
   )
   const [selectedSolution, setSelectedSolution] = useState<string | null>(null)
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState('')
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>(
+    'success'
+  )
 
   const handleClick = (route: string) => router.push(route)
 
@@ -84,8 +97,6 @@ export default function Home() {
     getProblems()
   }, [user])
 
-  const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
-
   const getChipColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'submitted':
@@ -126,6 +137,43 @@ export default function Home() {
     ))
   }
 
+  const handleDelete = async (_id: string) => {
+    if (!user) return
+
+    try {
+      const response = await fetch(`/api/delete-proxy`, {
+        method: 'POST', // POST request for deletion
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({_id, userId: user.id})
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete problem')
+      }
+
+      // Filter out the deleted problem from the rows
+      setRows((prevRows) => prevRows.filter((row) => row._id !== _id))
+
+      // Set snackbar for success
+      setSnackbarMessage('Problem deleted successfully')
+      setSnackbarSeverity('success')
+    } catch (error) {
+      console.error('Error:', error)
+
+      // Set snackbar for error
+      setSnackbarMessage('Error deleting problem')
+      setSnackbarSeverity('error')
+    } finally {
+      setSnackbarOpen(true) // Open the snackbar after deletion
+    }
+  }
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false)
+  }
+
   return (
     <>
       <div className="absolute top-16 right-4 text-right">
@@ -134,7 +182,7 @@ export default function Home() {
       <Button
         className="!mt-6"
         onClick={() => handleClick('/submissions/new')}
-        variant="outlined"
+        variant="contained"
       >
         Create new
       </Button>
@@ -151,13 +199,25 @@ export default function Home() {
               <TableCell className="!font-bold">Status</TableCell>
               <TableCell className="!font-bold">View Problem Data</TableCell>
               <TableCell className="!font-bold">Solution</TableCell>
+              <TableCell className="!font-bold">Delete</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={7} align="center">
                   <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  <div>
+                    <p>
+                      No problems found. It seems you haven&apos;t submitted any
+                      problems yet.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -199,6 +259,16 @@ export default function Home() {
                       capitalize(row.solution)
                     )}
                   </TableCell>
+                  <TableCell>
+                    <IconButton
+                      aria-label="delete"
+                      className="hover:!bg-gray-400"
+                      color="error"
+                      onClick={() => handleDelete(row._id)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -224,6 +294,22 @@ export default function Home() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{width: '100%'}}
+          variant="filled"
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   )
 }
