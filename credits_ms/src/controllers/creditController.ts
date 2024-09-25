@@ -18,10 +18,10 @@ export const purchaseCredits = async (req: Request, res: Response) => {
 
   console.log(`Processing purchase for user ${userId}, credits: ${credits}, paymentMethodId: ${paymentMethodId}`);
   try{
-  const paymentAmount = credits * 2000; // Assuming 1 credit = $20
+  const paymentAmount = credits * 2000; // Assuming 1 credit = 20€
   const paymentIntent = await stripe.paymentIntents.create({
           amount: paymentAmount,
-          currency: 'usd',
+          currency: 'eur',
           payment_method: paymentMethodId,
           confirm: true,
           return_url: 'http://localhost:3000/credits'
