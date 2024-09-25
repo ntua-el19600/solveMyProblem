@@ -9,24 +9,31 @@ import { NotFoundError } from "./errors/not-found-error";
 import { addProblemRouter } from "./routes/addproblem";
 import { userproblemsRouter } from "./routes/userproblems";
 import { statisticsRouter } from "./routes/statistics";
+import { deleteRouter } from "./routes/delete";
 
 const app = express();
 
 const API_KEY = process.env.API_KEY;
 
-const authenticateApiKey = (req: Request, res: Response, next: NextFunction) => {
-  const apiKey = req.headers['x-api-key'];
+const authenticateApiKey = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const apiKey = req.headers["x-api-key"];
 
   if (!apiKey || apiKey !== API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
-  next()
+  next();
 };
 
-app.use(cors({
-  origin: 'http://localhost:3000',
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  })
+);
 
 app.use(json());
 app.use(
@@ -41,6 +48,7 @@ app.use(authenticateApiKey);
 app.use(addProblemRouter);
 app.use(userproblemsRouter);
 app.use(statisticsRouter);
+app.use(deleteRouter);
 
 app.all("*", async (req, res) => {
   throw new NotFoundError();
