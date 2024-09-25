@@ -80,14 +80,14 @@ export default function Home() {
       <Button
         className="!mt-4 !capitalize"
         onClick={() => handleClick('/credits')}
-        variant="outlined"
+        variant="contained"
       >
         Buy credits!
       </Button>
       <Button
         className="!mt-2 !capitalize"
         onClick={() => handleClick('/submissions/new')}
-        variant="outlined"
+        variant="contained"
       >
         Submit your problem now!
       </Button>

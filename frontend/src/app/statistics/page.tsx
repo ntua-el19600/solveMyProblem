@@ -161,8 +161,10 @@ export default function Statistics() {
           </Grid>
         </>
       ) : (
-        <Typography variant="body1" color="error">
+        <Typography variant="h6" color="error" className="mt-20">
           No data available.
+          <br />
+          It seems you haven&apos;t submitted any problems yet.
         </Typography>
       )}
     </div>

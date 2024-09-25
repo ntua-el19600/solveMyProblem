@@ -233,7 +233,7 @@ export default function Home() {
             className="!mt-2"
             disabled={!model || !!helperText || !jsonInput}
             onClick={handleSubmit}
-            variant="outlined"
+            variant="contained"
           >
             Submit
           </Button>
