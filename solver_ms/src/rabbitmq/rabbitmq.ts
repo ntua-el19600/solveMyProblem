@@ -3,6 +3,9 @@ import { solveLinearProblem } from "../utilities/linear";
 import { solveVrpProblem } from "../utilities/vrp";
 import axios from "axios";
 
+let connection: Connection;
+let channel: Channel;
+
 const deductUserCredits = async (userId: String, category: String): Promise<boolean> => {
   try {
     const response = await axios.post("http://credits:3001/api/credits/reduce", {
@@ -29,9 +32,6 @@ const deductUserCredits = async (userId: String, category: String): Promise<bool
     return false; // Deduction failed (insufficient credits or other error)
   }
 };
-
-let connection: Connection;
-let channel: Channel;
 
 export const setupRabbitMQListener = async () => {
   try {
@@ -78,18 +78,13 @@ export const setupRabbitMQListener = async () => {
           const message = JSON.parse(messageContent);
 
           try {
-            
-
-            const deductionSuccess = await deductUserCredits(message.userId, message.category);
-            if (!deductionSuccess) {
-              channel.ack(msg); // Acknowledge message and stop further processing
-              return;
-            }
-
             const problem = JSON.stringify(message.problem_data);
             const problem_data = JSON.parse(problem);
 
+            let deductionSuccess = false;
+
             if (message.category === "linear") {
+              // Validate the linear problem before deducting credits
               const result = await solveLinearProblem(problem_data);
               console.log("Solution:", result.solution);
               console.log("Elapsed Time:", result.elapsedTime, "ms");
@@ -101,6 +96,13 @@ export const setupRabbitMQListener = async () => {
                 userId: message.userId,
               };
               const myn = JSON.stringify(mynhma);
+
+              // Deduct credits after solving the problem
+              deductionSuccess = await deductUserCredits(message.userId, message.category);
+              if (!deductionSuccess) {
+                channel.ack(msg); // Acknowledge message if deduction fails
+                return;
+              }
 
               await publishToQueue(myn);
               channel.ack(msg); // Acknowledge message after solving
@@ -123,11 +125,25 @@ export const setupRabbitMQListener = async () => {
               };
               const myn = JSON.stringify(mynhma);
 
+              // Deduct credits after solving the problem
+              deductionSuccess = await deductUserCredits(message.userId, message.category);
+              if (!deductionSuccess) {
+                channel.ack(msg); // Acknowledge message if deduction fails
+                return;
+              }
+
               await publishToQueue(myn);
               channel.ack(msg); // Acknowledge message after solving
-            } 
+            } else {
+              // If the category is neither "linear" nor "vrp", skip processing
+              console.log(`Invalid problem category: ${message.category}`);
+              channel.ack(msg); // Acknowledge message without processing
+              return;
+            }
           } catch (error) {
-            console.error("Error processing message:");
+            console.error("Error processing message:", error);
+
+            // Send failure message back
             const mynhma = {
               solution: "none",
               elapsedTime: 0,
@@ -136,7 +152,7 @@ export const setupRabbitMQListener = async () => {
             };
             const myn = JSON.stringify(mynhma);
             await publishToQueue(myn);
-            console.log(error);
+
             channel.ack(msg); // Acknowledge message even if there is an error
           }
         }

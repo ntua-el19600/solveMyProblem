@@ -21,8 +21,53 @@ router.post(
       .withMessage("The parameter must be either linear or vrp"),
     body("json")
       .isObject()
-      .notEmpty()
-      .withMessage("json object must be provided"),
+      .custom((json, { req }) => {
+        const category = req.body.category;
+
+        if (category === "linear") {
+          // Only check if fields are missing or empty
+          if (!json.Variables) {
+            throw new Error(
+              "json must include 'variables' and it should not be empty"
+            );
+          }
+          if (!json.Objective) {
+            throw new Error(
+              "json must include 'objectiveFunction' and it should not be empty"
+            );
+          }
+          if (!json.Constraints) {
+            throw new Error(
+              "json must include 'constraints' and it should not be empty"
+            );
+          }
+        } else if (category === "vrp") {
+          // Only check if fields are missing or empty
+          if (!json.locations) {
+            throw new Error(
+              "json must include 'locations' and it should not be empty"
+            );
+          }
+          if (!json.num_vehicles) {
+            throw new Error(
+              "json must include 'vehicles' and it should not be empty"
+            );
+          }
+          if (!json.depot) {
+            throw new Error(
+              "json must include 'depot' and it should not be empty"
+            );
+          }
+          if (!json.max_distance) {
+            throw new Error(
+              "json must include 'max_distance' and it should not be empty"
+            );
+          }
+        }
+
+        return true;
+      })
+      .withMessage("json object must be valid for the given category"),
   ],
   validateRequest,
 
